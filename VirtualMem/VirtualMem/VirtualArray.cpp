@@ -1,91 +1,106 @@
-п»ї#include "VirtualArray.h"
+#include "VirtualArray.h"
 #include <cstdlib>
 #include <ctime>
+#include <windows.h>
 
-//  type РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СЃС‚РµРїРµРЅСЊСЋ 2 Рё РјРµРЅСЊС€Рµ 512 !!!!!
 VIRTUAL *vini(long size, int type) {
-	char *buffer;
 	 
-	if (size <= 0 || type <= 0) return NULL;
+	if (size <= 0 || type <= 0 || ((PAGESIZE % type) != 0)) return NULL;
 
-	// Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ СЂР°Р·РјРµСЂР° РјР°СЃСЃРёРІР° РЅР° РіСЂР°РЅРёС†Сѓ СЃС‚СЂР°РЅРёС†С‹
-	long sizeBuff = size * type;
-	if ((sizeBuff % PAGESIZE ) != 0) sizeBuff = (sizeBuff / PAGESIZE + 1) * PAGESIZE;
-
-	buffer = new char[sizeBuff];
-
-	for (int i = 0; i < sizeBuff; i++) {
-		buffer[i] = 0;
-	}
-
-	// РЎРѕР·РґР°РµРј Р±РёРЅР°СЂРЅС‹Р№ С„Р°Р№Р» Рё РѕС‚РєСЂС‹РІР°РµРј РЅР° С‡С‚РµРЅРёРµ/Р·Р°РїРёСЃСЊ
+	// Создаем бинарный файл и открываем на чтение/запись
 	FILE* f = fopen("1.dat", "w+");
 
 	if (f == NULL) {
 		return NULL;
 	}
 	else {	
-		fwrite(buffer, sizeof(char), sizeBuff, f);
-		VIRTUAL *res = new VIRTUAL;
 
+		// Выравнивание размера массива на границу страницы
+		long sizeBuff = size * type;
+		if ((sizeBuff % PAGESIZE ) != 0) sizeBuff = (sizeBuff / PAGESIZE + 1) * PAGESIZE;
+
+		// Выделение памяти на диске
+		if (fseek(f, sizeBuff - 1, SEEK_SET) != 0) return NULL;
+		if (!ferror(f)) fputc(0, f);
+		else return NULL;
+
+		VIRTUAL *res = new VIRTUAL;
 		res->Fp = f;
 		res->Type = type;
 		for (int i = 0; i < NPAGES; i++) {
 			res->Number[i] = i;
-			res->Status[i] &= ~MODIFY_BIT; // СЃР±СЂРѕСЃ С„Р»Р°РіР° РјРѕРґРёС„РёРєР°С†РёРё
+			res->Status[i] &= ~MODIFY_BIT; // сброс флага модификации 
 		}
+
 		return res;
 	}
 }
 
 void* addres(VIRTUAL* arr, long index) {
-	// РЅРѕРјРµСЂ СЃС‚СЂР°РЅРёС†С‹
+	// номер страницы
 	long page = index / (PAGESIZE / arr->Type);
 
-	// РЈР·РЅР°РµРј РµСЃС‚СЊ Р»Рё СЃС‚СЂР°РЅРёС†Р° РІ РјР°СЃСЃРёРІРµ
-	fseek(arr->Fp, 0, SEEK_END);
+	// Узнаем есть ли страница в массиве
+	if (fseek(arr->Fp, 0, SEEK_END) != 0) return NULL;
 	fpos_t pos;
-	fgetpos(arr->Fp, &pos);
+	if (fgetpos(arr->Fp, &pos) != 0) return NULL;
 	if ( (pos / PAGESIZE) <= page ) return NULL;
+
 
 	int i = 0;
 	while ((i < NPAGES) && (arr->Number[i] != page)) {
 		i++;
 	}
 	
-	// РЎС‚СЂР°РЅРёС†С‹ РЅРµС‚ РІ РїР°РјСЏС‚Рё
+	// Страницы нет в памяти
 	if (i >= NPAGES) {
 
-		// Р Р°РЅРґРѕРјРЅР°СЏ СЃС‚СЂР°РЅРёС†Р° РІ РїР°РјСЏС‚Рё РґР»СЏ Р·Р°РјРµРЅС‹
+		// Рандомная страница в памяти для замены
 		srand(time(0));
 		i = rand() % NPAGES;
 
-		// Р•СЃР»Рё Р±РёС‚ РјРѕРґРёС„РёРєР°С†РёРё СѓСЃС‚Р°РЅРѕРІР»РµРЅ, С‚Рѕ РІС‹РіСЂСѓР¶Р°РµРј СЃС‚СЂР°РЅРёС†Сѓ
+		// Если бит модификации установлен, то выгружаем страницу
 		if ((arr->Status[i] & MODIFY_BIT) > 0) {
-			fseek(arr->Fp,  arr->Number[i] * PAGESIZE, SEEK_SET);
-			fwrite(&(arr->Page[i*PAGESIZE]) , sizeof(char), PAGESIZE, arr->Fp);
+			if (fseek(arr->Fp,  arr->Number[i] * PAGESIZE, SEEK_SET) != 0) return NULL;
+			if (fwrite(&(arr->Page[i*PAGESIZE]) , sizeof(char), PAGESIZE, arr->Fp) != PAGESIZE) return NULL;
 		}
 		
-		// Р—Р°РіСЂСѓР·РєР° СЃС‚СЂР°РЅРёС†С‹ РёР· С„Р°Р№Р»Р°
-        fseek(arr->Fp,  page * PAGESIZE, SEEK_SET);
-        fread(&(arr->Page[i*PAGESIZE]), sizeof(char), PAGESIZE, arr->Fp);
+		// Загрузка страницы из файла
+
+        if (fseek(arr->Fp,  page * PAGESIZE, SEEK_SET) != 0) return NULL;
+
+		// При ошибке данной операции портится массив и дальнейшая работа с массивом невозможна
+		if (fread(&(arr->Page[i*PAGESIZE]), sizeof(char), PAGESIZE, arr->Fp) != PAGESIZE) {
+				// исключение
+		}
+
         arr->Number[i] = page;
-		arr->Status[i] &= ~MODIFY_BIT; // СЃР±СЂРѕСЃ С„Р»Р°РіР° РјРѕРґРёС„РёРєР°С†РёРё 
+		arr->Status[i] &= ~MODIFY_BIT; // сброс флага модификации 
 	} 
 
-	// СЂР°СЃСЃС‡РµС‚ СЃРјРµС‰РµРЅРёСЏ РЅР° СЃС‚СЂР°РЅРёС†Рµ РІ Р±Р°Р№С‚Р°С…
+	// рассчет смещения на странице в байтах
 	int offset = ( index % (PAGESIZE / arr->Type) ) * arr->Type;
 	return &(arr->Page[i * PAGESIZE + offset]);
 }
 
 int vput(VIRTUAL *arr, long index, VTYPE *value) {
-	if (addres(arr, index) == NULL) return NULL;
-	return fwrite(addres(arr, index), sizeof(char), PAGESIZE, arr->Fp);
+	void *addr = addres(arr, index);
+	if ((addr == NULL) || (addr == value)) return -1;
+
+	// Индекс страницы в массиве STATUS
+	int i = ((char*)addr - arr->Page) / PAGESIZE;
+
+	arr->Status[i] |= MODIFY_BIT; // установка флага модификации  
+
+	memcpy(addr, value, arr->Type);
+	return 0;
 }
 
 int vget(VIRTUAL* arr, long index, VTYPE* value) {
-	if (addres(arr, index) == NULL) return NULL;
-	return fread(addres(arr, index), sizeof(char), PAGESIZE, arr->Fp);
+	void *addr = addres(arr, index);
+	if ((addr == NULL) || (addr == value)) return -1;
+	memcpy(value, addr, arr->Type);
+	return 0;
 }
 
 
