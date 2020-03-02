@@ -1,14 +1,14 @@
-#include "VirtualArray.h"
+п»ї#include "VirtualArray.h"
 #include <cstdlib>
 #include <ctime>
 
-//  type должен быть степенью 2 и меньше 512 !!!!!
+//  type РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СЃС‚РµРїРµРЅСЊСЋ 2 Рё РјРµРЅСЊС€Рµ 512 !!!!!
 VIRTUAL *vini(long size, int type) {
 	char *buffer;
 	 
 	if (size <= 0 || type <= 0) return NULL;
 
-	// Выравнивание размера массива на границу страницы
+	// Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ СЂР°Р·РјРµСЂР° РјР°СЃСЃРёРІР° РЅР° РіСЂР°РЅРёС†Сѓ СЃС‚СЂР°РЅРёС†С‹
 	long sizeBuff = size * type;
 	if ((sizeBuff % PAGESIZE ) != 0) sizeBuff = (sizeBuff / PAGESIZE + 1) * PAGESIZE;
 
@@ -18,7 +18,7 @@ VIRTUAL *vini(long size, int type) {
 		buffer[i] = 0;
 	}
 
-	// Создаем бинарный файл и открываем на чтение/запись
+	// РЎРѕР·РґР°РµРј Р±РёРЅР°СЂРЅС‹Р№ С„Р°Р№Р» Рё РѕС‚РєСЂС‹РІР°РµРј РЅР° С‡С‚РµРЅРёРµ/Р·Р°РїРёСЃСЊ
 	FILE* f = fopen("1.dat", "w+");
 
 	if (f == NULL) {
@@ -32,17 +32,17 @@ VIRTUAL *vini(long size, int type) {
 		res->Type = type;
 		for (int i = 0; i < NPAGES; i++) {
 			res->Number[i] = i;
-			res->Status[i] &= ~MODIFY_BIT; // сброс флага модификации
+			res->Status[i] &= ~MODIFY_BIT; // СЃР±СЂРѕСЃ С„Р»Р°РіР° РјРѕРґРёС„РёРєР°С†РёРё
 		}
 		return res;
 	}
 }
 
 void* addres(VIRTUAL* arr, long index) {
-	// номер страницы
+	// РЅРѕРјРµСЂ СЃС‚СЂР°РЅРёС†С‹
 	long page = index / (PAGESIZE / arr->Type);
 
-	// Узнаем есть ли страница в массиве
+	// РЈР·РЅР°РµРј РµСЃС‚СЊ Р»Рё СЃС‚СЂР°РЅРёС†Р° РІ РјР°СЃСЃРёРІРµ
 	fseek(arr->Fp, 0, SEEK_END);
 	fpos_t pos;
 	fgetpos(arr->Fp, &pos);
@@ -53,27 +53,27 @@ void* addres(VIRTUAL* arr, long index) {
 		i++;
 	}
 	
-	// Страницы нет в памяти
+	// РЎС‚СЂР°РЅРёС†С‹ РЅРµС‚ РІ РїР°РјСЏС‚Рё
 	if (i >= NPAGES) {
 
-		// Рандомная страница в памяти для замены
+		// Р Р°РЅРґРѕРјРЅР°СЏ СЃС‚СЂР°РЅРёС†Р° РІ РїР°РјСЏС‚Рё РґР»СЏ Р·Р°РјРµРЅС‹
 		srand(time(0));
 		i = rand() % NPAGES;
 
-		// Если бит модификации установлен, то выгружаем страницу
+		// Р•СЃР»Рё Р±РёС‚ РјРѕРґРёС„РёРєР°С†РёРё СѓСЃС‚Р°РЅРѕРІР»РµРЅ, С‚Рѕ РІС‹РіСЂСѓР¶Р°РµРј СЃС‚СЂР°РЅРёС†Сѓ
 		if ((arr->Status[i] & MODIFY_BIT) > 0) {
 			fseek(arr->Fp,  arr->Number[i] * PAGESIZE, SEEK_SET);
 			fwrite(&(arr->Page[i*PAGESIZE]) , sizeof(char), PAGESIZE, arr->Fp);
 		}
 		
-		// Загрузка страницы из файла
+		// Р—Р°РіСЂСѓР·РєР° СЃС‚СЂР°РЅРёС†С‹ РёР· С„Р°Р№Р»Р°
         fseek(arr->Fp,  page * PAGESIZE, SEEK_SET);
         fread(&(arr->Page[i*PAGESIZE]), sizeof(char), PAGESIZE, arr->Fp);
         arr->Number[i] = page;
-		arr->Status[i] &= ~MODIFY_BIT; // сброс флага модификации 
+		arr->Status[i] &= ~MODIFY_BIT; // СЃР±СЂРѕСЃ С„Р»Р°РіР° РјРѕРґРёС„РёРєР°С†РёРё 
 	} 
 
-	// рассчет смещения на странице в байтах
+	// СЂР°СЃСЃС‡РµС‚ СЃРјРµС‰РµРЅРёСЏ РЅР° СЃС‚СЂР°РЅРёС†Рµ РІ Р±Р°Р№С‚Р°С…
 	int offset = ( index % (PAGESIZE / arr->Type) ) * arr->Type;
 	return &(arr->Page[i * PAGESIZE + offset]);
 }
