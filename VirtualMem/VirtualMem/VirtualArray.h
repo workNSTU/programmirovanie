@@ -1,16 +1,16 @@
-#ifndef VIRTUAL_ARRAY
+п»ї#ifndef VIRTUAL_ARRAY
 #define VIRTUAL_ARRAY
 
 #include <stdio.h>
 
 #define NPAGES 2
 
-// размер страницы в битах
+// СЂР°Р·РјРµСЂ СЃС‚СЂР°РЅРёС†С‹ РІ Р±РёС‚Р°С…
 #define PAGESIZE 512
 
 typedef char VTYPE;
 
-// маска бита модификации у элемента массива Status
+// РјР°СЃРєР° Р±РёС‚Р° РјРѕРґРёС„РёРєР°С†РёРё Сѓ СЌР»РµРјРµРЅС‚Р° РјР°СЃСЃРёРІР° Status
 #define MODIFY_BIT 1
 
 struct VIRTUAL {
@@ -21,9 +21,9 @@ struct VIRTUAL {
 	char Page[NPAGES * PAGESIZE];
 };
 
-VIRTUAL *vini(long size, int Type);		//процедура инициализации виртуального массива
-int vput(VIRTUAL *arr, long index, VTYPE *value);		//процедура записи в массив
-int vget(VIRTUAL *arr, long index, VTYPE *value);		//процедура чтения из массива
-void *addres(VIRTUAL *arr, long index);		//процедура вычисления адреса элемента
+VIRTUAL *vini(long size, int Type);		//РїСЂРѕС†РµРґСѓСЂР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РІРёСЂС‚СѓР°Р»СЊРЅРѕРіРѕ РјР°СЃСЃРёРІР°
+int vput(VIRTUAL *arr, long index, VTYPE *value);		//РїСЂРѕС†РµРґСѓСЂР° Р·Р°РїРёСЃРё РІ РјР°СЃСЃРёРІ
+int vget(VIRTUAL *arr, long index, VTYPE *value);		//РїСЂРѕС†РµРґСѓСЂР° С‡С‚РµРЅРёСЏ РёР· РјР°СЃСЃРёРІР°
+void *addres(VIRTUAL *arr, long index);		//РїСЂРѕС†РµРґСѓСЂР° РІС‹С‡РёСЃР»РµРЅРёСЏ Р°РґСЂРµСЃР° СЌР»РµРјРµРЅС‚Р°
 
 #endif /* VIRTUAL_ARRAY */

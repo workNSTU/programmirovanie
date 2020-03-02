@@ -1,4 +1,4 @@
-#include "VirtualArray.h"
+ï»¿#include "VirtualArray.h"
 #include <cstdlib>
 #include <ctime>
 #include <windows.h>
@@ -7,7 +7,7 @@ VIRTUAL *vini(long size, int type) {
 	 
 	if (size <= 0 || type <= 0 || ((PAGESIZE % type) != 0)) return NULL;
 
-	// Ñîçäàåì áèíàðíûé ôàéë è îòêðûâàåì íà ÷òåíèå/çàïèñü
+	// Ð¡Ð¾Ð·Ð´Ð°ÐµÐ¼ Ð±Ð¸Ð½Ð°Ñ€Ð½Ñ‹Ð¹ Ñ„Ð°Ð¹Ð» Ð¸ Ð¾Ñ‚ÐºÑ€Ñ‹Ð²Ð°ÐµÐ¼ Ð½Ð° Ñ‡Ñ‚ÐµÐ½Ð¸Ðµ/Ð·Ð°Ð¿Ð¸ÑÑŒ
 	FILE* f = fopen("1.dat", "w+");
 
 	if (f == NULL) {
@@ -15,11 +15,11 @@ VIRTUAL *vini(long size, int type) {
 	}
 	else {	
 
-		// Âûðàâíèâàíèå ðàçìåðà ìàññèâà íà ãðàíèöó ñòðàíèöû
+		// Ð’Ñ‹Ñ€Ð°Ð²Ð½Ð¸Ð²Ð°Ð½Ð¸Ðµ Ñ€Ð°Ð·Ð¼ÐµÑ€Ð° Ð¼Ð°ÑÑÐ¸Ð²Ð° Ð½Ð° Ð³Ñ€Ð°Ð½Ð¸Ñ†Ñƒ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñ‹
 		long sizeBuff = size * type;
 		if ((sizeBuff % PAGESIZE ) != 0) sizeBuff = (sizeBuff / PAGESIZE + 1) * PAGESIZE;
 
-		// Âûäåëåíèå ïàìÿòè íà äèñêå
+		// Ð’Ñ‹Ð´ÐµÐ»ÐµÐ½Ð¸Ðµ Ð¿Ð°Ð¼ÑÑ‚Ð¸ Ð½Ð° Ð´Ð¸ÑÐºÐµ
 		if (fseek(f, sizeBuff - 1, SEEK_SET) != 0) return NULL;
 		if (!ferror(f)) fputc(0, f);
 		else return NULL;
@@ -29,7 +29,7 @@ VIRTUAL *vini(long size, int type) {
 		res->Type = type;
 		for (int i = 0; i < NPAGES; i++) {
 			res->Number[i] = i;
-			res->Status[i] &= ~MODIFY_BIT; // ñáðîñ ôëàãà ìîäèôèêàöèè 
+			res->Status[i] &= ~MODIFY_BIT; // ÑÐ±Ñ€Ð¾Ñ Ñ„Ð»Ð°Ð³Ð° Ð¼Ð¾Ð´Ð¸Ñ„Ð¸ÐºÐ°Ñ†Ð¸Ð¸ 
 		}
 
 		return res;
@@ -37,10 +37,10 @@ VIRTUAL *vini(long size, int type) {
 }
 
 void* addres(VIRTUAL* arr, long index) {
-	// íîìåð ñòðàíèöû
+	// Ð½Ð¾Ð¼ÐµÑ€ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñ‹
 	long page = index / (PAGESIZE / arr->Type);
 
-	// Óçíàåì åñòü ëè ñòðàíèöà â ìàññèâå
+	// Ð£Ð·Ð½Ð°ÐµÐ¼ ÐµÑÑ‚ÑŒ Ð»Ð¸ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ð° Ð² Ð¼Ð°ÑÑÐ¸Ð²Ðµ
 	if (fseek(arr->Fp, 0, SEEK_END) != 0) return NULL;
 	fpos_t pos;
 	if (fgetpos(arr->Fp, &pos) != 0) return NULL;
@@ -52,33 +52,33 @@ void* addres(VIRTUAL* arr, long index) {
 		i++;
 	}
 	
-	// Ñòðàíèöû íåò â ïàìÿòè
+	// Ð¡Ñ‚Ñ€Ð°Ð½Ð¸Ñ†Ñ‹ Ð½ÐµÑ‚ Ð² Ð¿Ð°Ð¼ÑÑ‚Ð¸
 	if (i >= NPAGES) {
 
-		// Ðàíäîìíàÿ ñòðàíèöà â ïàìÿòè äëÿ çàìåíû
+		// Ð Ð°Ð½Ð´Ð¾Ð¼Ð½Ð°Ñ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ð° Ð² Ð¿Ð°Ð¼ÑÑ‚Ð¸ Ð´Ð»Ñ Ð·Ð°Ð¼ÐµÐ½Ñ‹
 		srand(time(0));
 		i = rand() % NPAGES;
 
-		// Åñëè áèò ìîäèôèêàöèè óñòàíîâëåí, òî âûãðóæàåì ñòðàíèöó
+		// Ð•ÑÐ»Ð¸ Ð±Ð¸Ñ‚ Ð¼Ð¾Ð´Ð¸Ñ„Ð¸ÐºÐ°Ñ†Ð¸Ð¸ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½, Ñ‚Ð¾ Ð²Ñ‹Ð³Ñ€ÑƒÐ¶Ð°ÐµÐ¼ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñƒ
 		if ((arr->Status[i] & MODIFY_BIT) > 0) {
 			if (fseek(arr->Fp,  arr->Number[i] * PAGESIZE, SEEK_SET) != 0) return NULL;
 			if (fwrite(&(arr->Page[i*PAGESIZE]) , sizeof(char), PAGESIZE, arr->Fp) != PAGESIZE) return NULL;
 		}
 		
-		// Çàãðóçêà ñòðàíèöû èç ôàéëà
+		// Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñ‹ Ð¸Ð· Ñ„Ð°Ð¹Ð»Ð°
 
         if (fseek(arr->Fp,  page * PAGESIZE, SEEK_SET) != 0) return NULL;
 
-		// Ïðè îøèáêå äàííîé îïåðàöèè ïîðòèòñÿ ìàññèâ è äàëüíåéøàÿ ðàáîòà ñ ìàññèâîì íåâîçìîæíà
+		// ÐŸÑ€Ð¸ Ð¾ÑˆÐ¸Ð±ÐºÐµ Ð´Ð°Ð½Ð½Ð¾Ð¹ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¸ Ð¿Ð¾Ñ€Ñ‚Ð¸Ñ‚ÑÑ Ð¼Ð°ÑÑÐ¸Ð² Ð¸ Ð´Ð°Ð»ÑŒÐ½ÐµÐ¹ÑˆÐ°Ñ Ñ€Ð°Ð±Ð¾Ñ‚Ð° Ñ Ð¼Ð°ÑÑÐ¸Ð²Ð¾Ð¼ Ð½ÐµÐ²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð°
 		if (fread(&(arr->Page[i*PAGESIZE]), sizeof(char), PAGESIZE, arr->Fp) != PAGESIZE) {
-				// èñêëþ÷åíèå
+				// Ð¸ÑÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ðµ
 		}
 
         arr->Number[i] = page;
-		arr->Status[i] &= ~MODIFY_BIT; // ñáðîñ ôëàãà ìîäèôèêàöèè 
+		arr->Status[i] &= ~MODIFY_BIT; // ÑÐ±Ñ€Ð¾Ñ Ñ„Ð»Ð°Ð³Ð° Ð¼Ð¾Ð´Ð¸Ñ„Ð¸ÐºÐ°Ñ†Ð¸Ð¸ 
 	} 
 
-	// ðàññ÷åò ñìåùåíèÿ íà ñòðàíèöå â áàéòàõ
+	// Ñ€Ð°ÑÑÑ‡ÐµÑ‚ ÑÐ¼ÐµÑ‰ÐµÐ½Ð¸Ñ Ð½Ð° ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ðµ Ð² Ð±Ð°Ð¹Ñ‚Ð°Ñ…
 	int offset = ( index % (PAGESIZE / arr->Type) ) * arr->Type;
 	return &(arr->Page[i * PAGESIZE + offset]);
 }
@@ -87,10 +87,10 @@ int vput(VIRTUAL *arr, long index, VTYPE *value) {
 	void *addr = addres(arr, index);
 	if ((addr == NULL) || (addr == value)) return -1;
 
-	// Èíäåêñ ñòðàíèöû â ìàññèâå STATUS
+	// Ð˜Ð½Ð´ÐµÐºÑ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñ‹ Ð² Ð¼Ð°ÑÑÐ¸Ð²Ðµ STATUS
 	int i = ((char*)addr - arr->Page) / PAGESIZE;
 
-	arr->Status[i] |= MODIFY_BIT; // óñòàíîâêà ôëàãà ìîäèôèêàöèè  
+	arr->Status[i] |= MODIFY_BIT; // ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° Ñ„Ð»Ð°Ð³Ð° Ð¼Ð¾Ð´Ð¸Ñ„Ð¸ÐºÐ°Ñ†Ð¸Ð¸  
 
 	memcpy(addr, value, arr->Type);
 	return 0;
