@@ -6,53 +6,55 @@
 
 using namespace std;
 
+#define SIZE 1100
+typedef char TYPE;
+
 int main() {
 	setlocale(LC_ALL, "RUS");
 
-	VIRTUAL *v = vini(8000, sizeof(char));
+	char *test = new TYPE[SIZE];
+	char *end = new TYPE[SIZE];
+	VIRTUAL *v = vini(SIZE, sizeof(TYPE));
 	int sw;
-	char *test, *end;
-	test = new char[8000];		//изначальный массив
-	end = new char[8000];		//конечный массив
-
-	addres(v, 8000);
+	
 	random_device rd;
 	mt19937 mersenne(rd());		//генератор случайных значений
 
 	for (;;)
 	{
-		cout << "\tМеню\n1 - Сгенерировать и вывести набор тестовых данных\n2 - Ввести тестовые данные в файл\n3 - Чтение из файла\n4 - Выход из программы\n";
+		cout << "\tМеню\n1 - Сгенерировать и вывести набор тестовых данных\n2 - Ввести тестовые данные в массив\n3 - Чтение из массива\n4 - Выход из программы\n";
 		cin >> sw;
 		switch (sw) {		//реализация меню
 		case 1:
-			for (int i = 0; i < 8000; i++) {		//заполнение массива случайными символами
+			for (int i = 0; i < SIZE; i++) {		//заполнение массива случайными символами
 				srand(mersenne());
-				test[i] = char(rand() % 26 + 0x61);
+				test[i] = TYPE(rand() % 26 + 0x61);
 				cout << test[i] << " ";
 			}
 			break;
 		case 2:
-			for (int i = 0; i < 8000; i++) {		//запись в файл
-				vput(v, i, test + i);
-			}
-			if (vput(v, 0, test + 0) != -1) {
-				cout << "Выполнено\n";
-			}
-			else {
-				cout << "Не выполнено\n";
+			for (int i = 0; i < SIZE; i++) {		//запись в массив
+				if (vput(v, i, &(test[i])) == -1) {
+					cout << "Произошла ошибка записи в массив";
+					break;
+				}
 			}
 			break;
 		case 3:
-			for (int i = 0; i < 8000; i++) {	//чтение из файла
-				vget(v, i, end + i);
-				cout << *(end + i) << ' ';
+			for (int i = 0; i < SIZE; i++) {	//чтение из массива
+				if (vget(v, i, &(end[i])) == -1) {
+					cout << "Отказ в чтении элемента";
+					break;
+				}
+				cout << end[i] << ' ';
 			}
 			break;
 		case 4:		//закрытие программы
+			saveAllPages(v);
 			fclose(v->Fp);
-			return NULL;
+			return 0;
 		default:		//exception
-			cout << "Ошибка!\n";
+			cout << "Неверная команда\n";
 			break;
 		}
 	}

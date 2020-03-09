@@ -25,5 +25,6 @@ VIRTUAL *vini(long size, int Type);		//процедура инициализац
 int vput(VIRTUAL *arr, long index, VTYPE *value);		//процедура записи в массив
 int vget(VIRTUAL *arr, long index, VTYPE *value);		//процедура чтения из массива
 void *addres(VIRTUAL *arr, long index);		//процедура вычисления адреса элемента
+bool saveAllPages(VIRTUAL* arr); // Выгрузка всех страниц в файл для просмотра дампа
 
 #endif /* VIRTUAL_ARRAY */

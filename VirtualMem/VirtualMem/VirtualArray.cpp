@@ -63,19 +63,18 @@ void* addres(VIRTUAL* arr, long index) {
 		if ((arr->Status[i] & MODIFY_BIT) > 0) {
 			if (fseek(arr->Fp,  arr->Number[i] * PAGESIZE, SEEK_SET) != 0) return NULL;
 			if (fwrite(&(arr->Page[i*PAGESIZE]) , sizeof(char), PAGESIZE, arr->Fp) != PAGESIZE) return NULL;
-		}
+			arr->Status[i] &= ~MODIFY_BIT; // сброс флага модификации 
+		}	
 		
 		// Загрузка страницы из файла
 
         if (fseek(arr->Fp,  page * PAGESIZE, SEEK_SET) != 0) return NULL;
-
-		// При ошибке данной операции портится массив и дальнейшая работа с массивом невозможна
 		if (fread(&(arr->Page[i*PAGESIZE]), sizeof(char), PAGESIZE, arr->Fp) != PAGESIZE) {
-				// исключение
+			arr->Number[i] = -1; // страница повреждена
+			return NULL;
 		}
 
         arr->Number[i] = page;
-		arr->Status[i] &= ~MODIFY_BIT; // сброс флага модификации 
 	} 
 
 	// рассчет смещения на странице в байтах
@@ -85,7 +84,7 @@ void* addres(VIRTUAL* arr, long index) {
 
 int vput(VIRTUAL *arr, long index, VTYPE *value) {
 	void *addr = addres(arr, index);
-	if ((addr == NULL) || (addr == value)) return -1;
+	if (addr == NULL) return -1;
 
 	// Индекс страницы в массиве STATUS
 	int i = ((char*)addr - arr->Page) / PAGESIZE;
@@ -96,9 +95,21 @@ int vput(VIRTUAL *arr, long index, VTYPE *value) {
 	return 0;
 }
 
+bool saveAllPages(VIRTUAL* arr)
+{
+	for (int i = 0; i < NPAGES; i++) {
+		if (arr->Number[i] >= 0) {
+			if (fseek(arr->Fp, arr->Number[i] * PAGESIZE, SEEK_SET) != 0) return false;
+			if (fwrite(&(arr->Page[i * PAGESIZE]), sizeof(char), PAGESIZE, arr->Fp) != PAGESIZE) return false;			
+		}
+	}
+
+	return true;
+}
+
 int vget(VIRTUAL* arr, long index, VTYPE* value) {
 	void *addr = addres(arr, index);
-	if ((addr == NULL) || (addr == value)) return -1;
+	if (addr == NULL) return -1;
 	memcpy(value, addr, arr->Type);
 	return 0;
 }
