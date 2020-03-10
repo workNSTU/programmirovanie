@@ -36,6 +36,13 @@ VIRTUAL *vini(long size, int type) {
 	}
 }
 
+int getCountPages(VIRTUAL* arr) {
+	fseek(arr->Fp, 0, SEEK_END);
+	fpos_t pos;
+	fgetpos(arr->Fp, &pos);
+	return (pos / PAGESIZE);
+}
+
 void* addres(VIRTUAL* arr, long index) {
 	// номер страницы
 	long page = index / (PAGESIZE / arr->Type);

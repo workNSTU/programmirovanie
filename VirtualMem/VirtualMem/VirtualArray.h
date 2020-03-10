@@ -26,5 +26,6 @@ int vput(VIRTUAL *arr, long index, VTYPE *value);		//процедура запи
 int vget(VIRTUAL *arr, long index, VTYPE *value);		//процедура чтения из массива
 void *addres(VIRTUAL *arr, long index);		//процедура вычисления адреса элемента
 bool saveAllPages(VIRTUAL* arr); // Выгрузка всех страниц в файл для просмотра дампа
+int getCountPages(VIRTUAL* arr);
 
 #endif /* VIRTUAL_ARRAY */
